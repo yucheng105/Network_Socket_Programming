@@ -7,6 +7,10 @@
 
 #define MAXDATASIZE 1024  
 
+
+// return socket file descriptor
+int CreateSocket(char* hostname, char* port);
+
 void CommunicateWithServer(int sockfd);
 
 
@@ -81,6 +85,7 @@ int main(int argc, char *argv[]) {
     
     
     
+    // close socket
     close(sockfd);
     return 0;
 }
@@ -103,8 +108,14 @@ void CommunicateWithServer(int sockfd)  {
         memset(serverResponse, 0, sizeof(serverResponse));
         
 
-        // user input cmds
+        // INPUT
         fgets(clientInput, sizeof(clientInput), stdin);
+        // extremely important
+        clientInput[strcspn(clientInput, "\n")] = '\0';
+        
+        // if user presses enter, ignore
+        if (strlen(clientInput) == 0)
+            continue;
        
        
         // send msg to server
@@ -119,15 +130,18 @@ void CommunicateWithServer(int sockfd)  {
         
         
         // recieving msg from server
-        int recvStatus = recv(sockfd, serverResponse, strlen(serverResponse), 0);
+        // use sizeof since everytime we init the buffer, len = 0
+        int recvStatus = recv(sockfd, serverResponse, sizeof(serverResponse), 0);
         if (recvStatus == -1) {
             perror("recv");
             continue;
         }
+        /*
         else if (recvStatus == 0)   {
             printf("Server Disconnection");
             break;
         }
+        */
         printf("%s\r\n", serverResponse);
         
     }

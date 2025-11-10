@@ -6,11 +6,17 @@
 #include <netdb.h>  
 
 #define MAXDATASIZE 1024  
+
+void CommunicateWithServer(int sockfd);
+
+
 int main(int argc, char *argv[]) {
     int sockfd;
     struct addrinfo hints, *servinfo, *p;
     int status;
     char buffer[MAXDATASIZE] = {0};
+    
+    
     
     
     if (argc != 3) {
@@ -30,6 +36,7 @@ int main(int argc, char *argv[]) {
     }
     
     
+    // go through all nodes
     for (p = servinfo; p != NULL; p = p->ai_next) {
         /*----------Create Socket-----------*/
         sockfd = socket(p->ai_family, p->ai_socktype, p->ai_protocol);
@@ -57,50 +64,72 @@ int main(int argc, char *argv[]) {
     // connection successful
     printf("Connection Successful\r\n");
     
-    
-    
-    
-    
-    
-
+    // print additional info regarding the host
     char s[INET6_ADDRSTRLEN];
     inet_ntop(p->ai_family, 
               p->ai_family == AF_INET ? 
                   (void*)&((struct sockaddr_in*)p->ai_addr)->sin_addr :
                   (void*)&((struct sockaddr_in6*)p->ai_addr)->sin6_addr,
               s, sizeof s);
-    printf("client: connecting to %s\n", s);
+    printf("client: connecting to %s\r\n\n", s);
     
     freeaddrinfo(servinfo);
     
     
     
+    CommunicateWithServer(sockfd);
     
     
-    
-    
-/*
-    const char *hello = "Hello from client";
-    if (send(sockfd, hello, strlen(hello), 0) == -1) {
-        perror("send");
-        close(sockfd);
-        return 1;
-    }
-    printf("Hello message sent\n");
-    
-
-    int numbytes = recv(sockfd, buffer, MAXDATASIZE-1, 0);
-    if (numbytes == -1) {
-        perror("recv");
-        close(sockfd);
-        return 1;
-    }
-    
-    buffer[numbytes] = '\0';
-    printf("client: received '%s'\n", buffer);
-    
-*/
     
     close(sockfd);
     return 0;
+}
+
+
+
+
+void CommunicateWithServer(int sockfd)  {
+    
+    // to buffer input cmds
+    char clientInput[MAXDATASIZE] = {0};
+    // buffer server response
+    char serverResponse[MAXDATASIZE] = {0};
+    
+    
+    while (1)   {
+        
+        // init buffers
+        memset(clientInput, 0, sizeof(clientInput));
+        memset(serverResponse, 0, sizeof(serverResponse));
+        
+
+        // user input cmds
+        fgets(clientInput, sizeof(clientInput), stdin);
+       
+       
+        // send msg to server
+        if (send(sockfd, clientInput, strlen(clientInput), 0) == -1) {
+            perror("send");
+            continue;
+        }
+        else    {
+            printf("Awaiting Server Response...\r\n");
+        }
+        
+        
+        
+        // recieving msg from server
+        int recvStatus = recv(sockfd, serverResponse, strlen(serverResponse), 0);
+        if (recvStatus == -1) {
+            perror("recv");
+            continue;
+        }
+        else if (recvStatus == 0)   {
+            printf("Server Disconnection");
+            break;
+        }
+        printf("%s\r\n", serverResponse);
+        
+    }
+    
 }

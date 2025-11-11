@@ -9,24 +9,44 @@
 
 
 // return socket file descriptor
-int CreateSocket(char* hostname, char* port);
+int CreateClientSocket(char* hostname, char* port);
 
 void CommunicateWithServer(int sockfd);
 
 
-int main(int argc, char *argv[]) {
-    int sockfd;
-    struct addrinfo hints, *servinfo, *p;
-    int status;
-    char buffer[MAXDATASIZE] = {0};
-    
-    
-    
+int main(int argc, char *argv[]) {      // IP PORT
+    int sockfd;     
+
     
     if (argc != 3) {
         fprintf(stderr, "usage: %s hostname port\n", argv[0]);
         exit(1);
     }
+    
+    sockfd = CreateClientSocket(argv[1], argv[2]);
+
+    CommunicateWithServer(sockfd);
+    
+    
+    
+    
+    
+
+    // close socket
+    close(sockfd);
+    
+    
+    
+    return 0;
+}
+
+
+int CreateClientSocket(char* hostname, char* port)
+{
+    int sockfd;
+    struct addrinfo hints, *servinfo, *p;
+    int status;
+    char buffer[MAXDATASIZE] = {0};
     
     /*-------Hints--------*/
     memset(&hints, 0, sizeof hints);
@@ -34,7 +54,7 @@ int main(int argc, char *argv[]) {
     hints.ai_socktype = SOCK_STREAM;
 
     /*-------getaddrinfo()-------*/
-    if ((status = getaddrinfo(argv[1], argv[2], &hints, &servinfo)) != 0) {
+    if ((status = getaddrinfo(hostname, port, &hints, &servinfo)) != 0) {
         fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(status));
         return 2;
     }
@@ -49,20 +69,21 @@ int main(int argc, char *argv[]) {
             continue;
         }
         
+        // TODO: Bind
+        
         /*-------connect()-------*/
         if (connect(sockfd, p->ai_addr, p->ai_addrlen) == -1) {
             close(sockfd);
             perror("connect");
             continue;
         }
-        
         break; 
     }
     
     
     if (p == NULL) {
         fprintf(stderr, "failed to connect\n");
-        return 2;
+        return -1;
     }
     
     // connection successful
@@ -79,21 +100,16 @@ int main(int argc, char *argv[]) {
     
     freeaddrinfo(servinfo);
     
-    
-    
-    CommunicateWithServer(sockfd);
-    
-    
-    
-    // close socket
-    close(sockfd);
-    return 0;
+    return sockfd;
 }
 
 
 
 
-void CommunicateWithServer(int sockfd)  {
+void CommunicateWithServer(int serverSocketFd)  {
+    
+    int sockfd = serverSocketFd;
+    
     
     // to buffer input cmds
     char clientInput[MAXDATASIZE] = {0};
@@ -108,6 +124,7 @@ void CommunicateWithServer(int sockfd)  {
         memset(serverResponse, 0, sizeof(serverResponse));
         
 
+
         // INPUT
         fgets(clientInput, sizeof(clientInput), stdin);
         // extremely important
@@ -116,8 +133,33 @@ void CommunicateWithServer(int sockfd)  {
         // if user presses enter, ignore
         if (strlen(clientInput) == 0)
             continue;
-       
-       
+        
+        
+        //////////////////////////////////////////////////////////////////////
+        // Check clientInput: return the proper socket descriptor to send to
+        //////////////////////////////////////////////////////////////////////
+        
+        // check if is p2p payment, if yes, send to peer
+        int hashCnt = 0;
+        for (i = 0; i < strlen(clientInput); i++)   {
+            if (clientInput[i] == '#')
+                hashCnt++;
+        }
+        // send2peers: p2p PAYMENT msg has 2 '#'
+        if (hashCnt == 2)   {
+            // update sockfd to peer socket
+
+        }
+        // send2server
+        else    {
+            sockfd = serverSocketFd;
+        }
+        
+        
+        ///////////////////////
+        // SEND AND RECV MSG
+        ///////////////////////
+        
         // send msg to server
         if (send(sockfd, clientInput, strlen(clientInput), 0) == -1) {
             perror("send");
@@ -127,11 +169,8 @@ void CommunicateWithServer(int sockfd)  {
             printf("Awaiting Server Response...\r\n");
         }
         
-        
-        
         // recieving msg from server
-        // use sizeof since everytime we init the buffer, len = 0
-        int recvStatus = recv(sockfd, serverResponse, sizeof(serverResponse), 0);
+        int recvStatus = recv(sockfd, serverResponse, sizeof(serverResponse), 0);       // use sizeof since everytime we init the buffer, len = 0
         if (recvStatus == -1) {
             perror("recv");
             continue;

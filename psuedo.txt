@@ -1,0 +1,108 @@
+client.c
+/////////////////////////////////////////////
+// 這裡都做recv()
+/////////////////////////////////////////////
+
+RecvPeerMsg()
+{
+    Bind()
+    Listen()
+    
+    while() {
+        // 一直在等待有人來連
+        while   {
+            accept()
+            
+            // 有人連上的話
+            break;
+            
+        }
+        
+        msg = recv()
+        printf(msg)
+        
+        
+    
+    }
+}
+
+RecvServerMsg() {
+    while (1)   {
+        recv(from serverSocketFd)
+        
+    }
+}
+
+
+int main()  {
+
+    // 連上server
+    CreateClientSocket()
+
+    
+    // sockets for P2P
+    for (int i = 0; i < MAXSOCKETS; i++)
+        // 做一些socket，每個socket都用一個thread來等候有人來連
+        pthread_create(RecvPeerMsg)
+        
+    // 收server傳來的東西
+    pthread_create(RecvServerMsg)
+    
+    
+    
+    
+    
+    
+    
+    /////////////////////////////////////////////////////////////////////
+    // *******************Terminal Input之後的動作********************* //
+    // ***********************這裡都只做send*************************** //
+    /////////////////////////////////////////////////////////////////////
+    
+    while (True)    {
+    
+        init TargetSocketFd = serverSocketfd;    // 最初就使用和server socketfd
+        
+        ///////////////////////
+        // InputProcessing
+        ///////////////////////
+        
+        // 如果只是換行的話，ignore
+        if (strlen(inputMsg) == 0)
+            ignore
+        
+        // 可以直接傳給server的訊息
+        if (inputMsg == REGISTER or LOGIN or LIST)
+            TargetSocketFD = serverSocketFd
+            
+        // 要傳給Peer的訊息
+        if (inputMsg == PAYMENT)        // send msg to Peer        
+            // 呼叫List來目標IP
+            send(msg = "List" to Server)
+            listMsg = recv( from Server)        // 這是唯一個不用thread來接收的訊息。其他的可以用thread來收。
+            TargetIPandPort = parse(listMsg)
+            
+            // 獲得了peer的位置之後，做一個socket出來。
+            Create_socket_and_connect_to_peer(TargetIPandPort)
+            // update TargetSocketFD
+            TargetSocketFD = peersocketfd
+
+
+        // 傳送訊息到TargetSocketFd
+        send(inputMsg) toward TargetIPandPort
+        
+        recieve()
+        
+                
+    }
+        
+    
+
+}
+
+
+
+    
+    
+    
+    

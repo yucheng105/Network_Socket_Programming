@@ -1,0 +1,1 @@
+#define MAXDATASIZE 1024

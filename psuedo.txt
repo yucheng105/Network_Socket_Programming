@@ -3,35 +3,40 @@ client.c
 // 這裡都做recv()
 /////////////////////////////////////////////
 
-RecvPeerMsg()
+void *RecvPeerMsg(userPort)
 {
-    Bind()
-    Listen()
-    
-    while() {
-        // 一直在等待有人來連
-        while   {
-            accept()
-            
-            // 有人連上的話
-            break;
-            
-        }
-        
-        msg = recv()
-        printf(msg)
-        
-        
-    
+    while (1) {
+        int client_fd = accept(listen_fd, (struct sockaddr *)&client_addr, &len);
+        if (client_fd < 0) continue;
+
+        // 為每個 client 開一個 thread 處理
+        pthread_t tid;
+        pthread_create(&tid, NULL, handle_client, (void *)&client_fd);
+        pthread_detach(tid);
     }
+
 }
 
-RecvServerMsg() {
-    while (1)   {
-        recv(from serverSocketFd)
-        
+void *handle_client(void *arg) {
+    int fd = *(int *)arg;
+    char buf[1024];
+    int n;
+
+    while ((n = recv(fd, buf, sizeof(buf), 0)) > 0) {
+        // 成功收到
+        buf[n] = '\0';
+        if (buf裡面有兩個井字號)        // 唯有LOGIN msg裡面會有兩個井字號
+            send(buf to server);                    // TODO:所以這個函式會需要用到serverFd，要記得傳入
+        else
+            printf()
     }
+
+    close(fd);
+    printf("Client disconnected.\n");
+    return NULL;
 }
+
+
 
 
 int main()  {
@@ -40,18 +45,8 @@ int main()  {
     CreateClientSocket()
 
     
-    // sockets for P2P
-    for (int i = 0; i < MAXSOCKETS; i++)
-        // 做一些socket，每個socket都用一個thread來等候有人來連
-        pthread_create(RecvPeerMsg)
-        
     // 收server傳來的東西
     pthread_create(RecvServerMsg)
-    
-    
-    
-    
-    
     
     
     /////////////////////////////////////////////////////////////////////
@@ -71,13 +66,19 @@ int main()  {
         if (strlen(inputMsg) == 0)
             ignore
         
-        // 可以直接傳給server的訊息
-        if (inputMsg == REGISTER or LOGIN or LIST)
+        // 可以直接傳給server的訊息：REGISTER, LIST
+        if (inputMsg == REGISTER or LIST)
             TargetSocketFD = serverSocketFd
             
+        // 有人LOGIN了，就要開始listen了。  
+        else if (inputMsg == LOGIN)
+            TargetSocketFD = serverSocketFd
+            parseInputMsg -> get PORT           // 回憶！LOGIN的時候要使用者會給出PORT number，用那個PORT number來listen
+            pthread_create(RecievePeerMsg)
+            
         // 要傳給Peer的訊息
-        if (inputMsg == PAYMENT)        // send msg to Peer        
-            // 呼叫List來目標IP
+        else if (inputMsg == PAYMENT)        // send msg to Peer        
+            // 呼叫List來找目標IP
             send(msg = "List" to Server)
             listMsg = recv( from Server)        // 這是唯一個不用thread來接收的訊息。其他的可以用thread來收。
             TargetIPandPort = parse(listMsg)
@@ -91,10 +92,12 @@ int main()  {
         // 傳送訊息到TargetSocketFd
         send(inputMsg) toward TargetIPandPort
         
-        recieve()
         
                 
     }
+    
+    
+    
         
     
 

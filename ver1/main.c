@@ -29,8 +29,24 @@ int main(int argc, char *argv[])  {
     /////////////////////
     // User Inputs
     /////////////////////
+    
+    // to buffer input cmds
+    char clientInput[MAXDATASIZE] = {0};
+
     while(1) {
+
+        // init buffers
+        memset(clientInput, 0, sizeof(clientInput));
+        memset(serverResponse, 0, sizeof(serverResponse));
+
+        // INPUT
+        fgets(clientInput, sizeof(clientInput), stdin);
+        // extremely important
+        clientInput[strcspn(clientInput, "\n")] = '\0';
         
+        // if user presses enter, ignore
+        if (strlen(clientInput) == 0)
+            continue;
 
     }
 
